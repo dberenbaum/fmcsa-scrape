@@ -22,22 +22,27 @@ def get_carriers(query_dict):
 
     # Make list of dicts for each carrier id (pv_apcant_id).
     soup = BeautifulSoup(response, "html.parser")
-    for apcant_id in soup.find_all("input", attrs={"name": "pv_apcant_id"}):
-        carriers.append({"pv_apcant_id": apcant_id.attrs["value"]})
+    for tag in soup.find_all("input", attrs={"name": "pv_apcant_id"}):
+        carrier = {"pv_apcant_id": tag.attrs["value"]}
 
-    # Add all info from html table to each carrier.
-    for field in tbl_fields:
-        for car_ix, tag in enumerate(soup.find_all("td",
-                                                     attrs={"headers": field})):
-            carriers[car_ix][field] = tag.string
+        # Add all info from html table to each carrier.
+        for field in tbl_fields:
+            field_tag = tag.find_previous("td", attrs={"headers": field})
+            carrier[field] = field_tag.string
+
+        carriers.append(carrier)
 
     return carriers
 
 
 def insurer_filter(carriers, insurers):
-    """Filter carriers by insurer pv_inser_id."""
+    """Filter carriers by insurer pv_inser_id, adding insurer info."""
 
-    ins_carriers = {insurer: [] for insurer in insurers}
+    ins_carriers = []
+    eff_dates = []
+    ins_str = "|".join(insurers)
+    ins_re = re.compile("pv_inser_id=(%s)" % ins_str)
+    eff_re = re.compile("effective_date")
 
     for carrier in carriers:
 
@@ -45,21 +50,23 @@ def insurer_filter(carriers, insurers):
         response = request.urlopen(insurance_url % query_string)
         soup = BeautifulSoup(response, "html.parser")
 
-        for ins_id in insurers:
-            if soup.find_all("a", href=re.compile("pv_inser_id=%s" % ins_id)):
-                ins_carriers[ins_id].append(carrier)
+        for tag in soup.find_all("a", attrs={"href": ins_re}):
+            ins_carr = carrier.copy()
+            ins_carr["insurer"] = tag.string
+
+            eff_date_tag = tag.find_next("td", attrs={"headers": eff_re})
+            ins_carr["effective_date"] = eff_date_tag.string
+
+            ins_carriers.append(ins_carr)
 
     return ins_carriers
 
 
-def write_carriers(ins_carriers, outdir=os.getcwd()):
+def write_carriers(carriers, outfile=os.path.join(os.getcwd(), "carriers.csv"),
+                   mode="w"):
     """Write list of carriers to csv for each insurer."""
 
-    for ins_id, carriers in ins_carriers.items():
-
-        with open("%s.csv" % ins_id, "w") as outfile:
-            writer = csv.DictWriter(outfile, tbl_fields)
-            writer.writeheader()
-            for carr_dict in carriers:
-                writer.writerow({k: v for k, v in carr_dict.items() if k in
-                                 tbl_fields})
+    with open(outfile, mode) as outfile:
+        writer = csv.DictWriter(outfile, carriers[0].keys())
+        writer.writeheader()
+        writer.writerows(carriers)
