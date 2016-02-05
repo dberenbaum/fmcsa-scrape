@@ -15,6 +15,8 @@ def main():
     parser.add_argument("--infile", "-i", required=True, help="""Path to text
                         file containing pv_inser_id for each insurer of interest
                         (one per line)""")
+    parser.add_argument("--outfile", "-o", required=True, help="""Path to file
+                        for writing results.""")
     parser.add_argument("--start", default=1, type=int, help="""Number of search
                         result at which to begin.""")
     parser.add_argument("--step", default=1000, help="""Number of search results
@@ -36,6 +38,10 @@ def main():
     mode = args.mode
     sleep = args.sleep
 
+    outfile = "%s_carriers.csv" % state
+    if args.outfile:
+        outfile = args.outfile
+
     for start in itertools.count(start=start, step=step):
 
         stop = start + step - 1
@@ -52,8 +58,7 @@ def main():
             filtered = scraper.insurer_filter(carriers, insurers)
 
             if filtered:
-                scraper.write_carriers(filtered, outfile="%s/carriers.csv"
-                                       % state, mode=mode)
+                scraper.write_carriers(filtered, outfile=outfile, mode=mode)
 
         t = time.strftime("%H:%M", time.localtime())
         print("%s Scraped records %d through %d" % (t, start,
