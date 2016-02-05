@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--infile", "-i", required=True, help="""Path to text
                         file containing pv_inser_id for each insurer of interest
                         (one per line)""")
-    parser.add_argument("--outfile", "-o", required=True, help="""Path to file
+    parser.add_argument("--outfile", "-o", help="""Path to file
                         for writing results.""")
     parser.add_argument("--start", default=1, type=int, help="""Number of search
                         result at which to begin.""")
