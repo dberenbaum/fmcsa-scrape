@@ -25,6 +25,8 @@ def main():
                         help="""File mode.""")
     parser.add_argument("--sleep", default="600", type=int, help="""Number of
                         seconds to sleep between batches of requests.""")
+    parser.add_argument("--timeout", default="120", type=int,
+                        help="""Timeout for web requests, in seconds.""")
 
     args = parser.parse_args()
 
@@ -37,6 +39,7 @@ def main():
     step = args.step
     mode = args.mode
     sleep = args.sleep
+    timeout = args.timeout
 
     outfile = "%s_carriers.csv" % state
     if args.outfile:
@@ -52,10 +55,10 @@ def main():
         query_dict = {"s_state": "%sUS" % state, "p_begin": start,
                       "p_end": stop}
 
-        carriers = scraper.get_carriers(query_dict)
+        carriers = scraper.get_carriers(query_dict, timeout)
 
         if carriers:
-            filtered = scraper.insurer_filter(carriers, insurers)
+            filtered = scraper.insurer_filter(carriers, insurers, timeout)
 
             if filtered:
                 scraper.write_carriers(filtered, outfile=outfile, mode=mode)
@@ -64,10 +67,12 @@ def main():
         print("%s Scraped records %d through %d" % (t, start,
                                                     start + len(carriers) - 1))
 
-        time.sleep(sleep)
-
         if len(carriers) < step:
             break
+
+        mode = "a"
+
+        time.sleep(sleep)
 
 
 if __name__ == "__main__":
