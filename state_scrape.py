@@ -12,7 +12,7 @@ def main():
                                     Carrier Safety Adminstration.""")
     parser.add_argument("--state", "-s", required=True, help="""State in which
                         to search""")
-    parser.add_argument("--infile", "-i", required=True, help="""Path to text
+    parser.add_argument("--infile", "-i", help="""Path to text
                         file containing pv_inser_id for each insurer of interest
                         (one per line)""")
     parser.add_argument("--outfile", "-o", help="""Path to file
@@ -31,8 +31,9 @@ def main():
     args = parser.parse_args()
 
     insurers = []
-    with open(args.infile) as f:
-        insurers = [line.strip() for line in f.readlines()]
+    if args.infile:
+        with open(args.infile) as f:
+            insurers = [line.strip() for line in f.readlines()]
 
     state = args.state
     start = args.start

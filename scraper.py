@@ -41,7 +41,9 @@ def insurer_filter(carriers, insurers, timeout=120):
 
     ins_carriers = []
     eff_dates = []
-    ins_str = "|".join(insurers)
+    ins_str = "\d{5}"
+    if insurers:
+        ins_str = "|".join(insurers)
     ins_re = re.compile("pv_inser_id=(%s)" % ins_str)
     eff_re = re.compile("effective_date")
 
